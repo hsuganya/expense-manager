@@ -1,0 +1,35 @@
+{
+  "name": "expense-manager",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "create-user": "node scripts/create-user.js",
+    "confirm-email": "node scripts/confirm-user-email.js",
+    "import-expenses": "node scripts/import-expenses-from-csv.js"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.1.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "date-fns": "^3.0.6",
+    "next": "14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "dotenv": "^16.6.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply text-gray-900 bg-gray-50;
+}
+
+/* Ensure all inputs have proper text color */
+input,
+select,
+textarea {
+  @apply text-gray-900;
+}
+
+input::placeholder,
+textarea::placeholder {
+  @apply text-gray-400;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
