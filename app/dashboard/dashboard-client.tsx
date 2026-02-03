@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import MobileBottomNav from '@/components/MobileBottomNav'
+import Logo from '@/components/Logo'
 
 type Expense = Database['public']['Tables']['expenses']['Row']
 
@@ -102,10 +104,10 @@ export default function DashboardClient({ userId }: { userId: string }) {
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar className="hidden md:flex">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-2">
-            <Wallet className="h-6 w-6" />
+            <Logo size="sm" showText={false} />
             <div className="flex flex-col">
               <span className="text-sm font-semibold">Expense Manager</span>
               <span className="text-xs text-muted-foreground">Track your spending</span>
@@ -137,11 +139,11 @@ export default function DashboardClient({ userId }: { userId: string }) {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-lg font-semibold">Expense Manager</h1>
+          <SidebarTrigger className="-ml-1 md:flex hidden" />
+          <Separator orientation="vertical" className="mr-2 h-4 md:flex hidden" />
+          <Logo size="sm" showText={true} />
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-6 pb-20 md:pb-6">
           <Analytics expenses={expenses} selectedMonth={selectedMonth} />
 
           <div className="mt-6">
@@ -186,16 +188,6 @@ export default function DashboardClient({ userId }: { userId: string }) {
           </div>
         </div>
 
-        {/* Floating Action Button for Mobile */}
-        <Button
-          onClick={() => setShowForm(true)}
-          size="icon"
-          className="fixed bottom-6 right-6 sm:hidden h-14 w-14 rounded-full shadow-lg z-40"
-          aria-label="Add Expense"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-
         {showForm && (
           <ExpenseForm
             userId={userId}
@@ -204,6 +196,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
           />
         )}
       </SidebarInset>
+      <MobileBottomNav onAddExpense={() => setShowForm(true)} />
     </SidebarProvider>
   )
 }

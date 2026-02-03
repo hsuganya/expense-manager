@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -72,9 +73,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-            Expense Manager
-          </h1>
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" showText={true} />
+          </div>
           <p className="text-center text-gray-600 mb-8">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>
