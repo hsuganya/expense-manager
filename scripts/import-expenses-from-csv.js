@@ -111,7 +111,7 @@ async function importExpenses(csvFilePath) {
   console.log(`✅ Parsed ${expenses.length} expenses from CSV`)
   console.log('\n📋 Expenses to import:')
   expenses.forEach((exp, index) => {
-    console.log(`   ${index + 1}. ${exp.description} - ${exp.category} - $${exp.amount} - ${exp.date}`)
+    console.log(`   ${index + 1}. ${exp.description} - ${exp.category} - ₹${exp.amount} - ${exp.date}`)
   })
 
   // Connect to Supabase

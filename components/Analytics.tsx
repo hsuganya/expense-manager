@@ -63,13 +63,13 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Spent</p>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-            ${analytics.total.toFixed(2)}
+            ₹{analytics.total.toFixed(2)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <p className="text-xs sm:text-sm text-gray-600 mb-1">Average per Day</p>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-            ${analytics.avgPerDay.toFixed(2)}
+            ₹{analytics.avgPerDay.toFixed(2)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -105,7 +105,7 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => `₹${value.toFixed(2)}`} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -125,7 +125,7 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
                   fontSize={12}
                 />
                 <YAxis />
-                <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => `₹${value.toFixed(2)}`} />
                 <Bar dataKey="value" fill="#0ea5e9" />
               </BarChart>
             </ResponsiveContainer>
@@ -151,7 +151,7 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
                   <span className="text-gray-700">{item.name}</span>
                 </div>
                 <span className="font-semibold text-gray-900">
-                  ${item.value.toFixed(2)}
+                  ₹{item.value.toFixed(2)}
                 </span>
               </div>
             ))}
