@@ -3,10 +3,28 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { Wallet, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import ExpenseForm from '@/components/ExpenseForm'
 import ExpenseList from '@/components/ExpenseList'
 import Analytics from '@/components/Analytics'
 import { Database } from '@/lib/database.types'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 
 type Expense = Database['public']['Tables']['expenses']['Row']
 
@@ -44,8 +62,6 @@ export default function DashboardClient({ userId }: { userId: string }) {
     }
   }
 
-  // Logout removed - authentication is disabled
-
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this expense?')) return
 
@@ -78,78 +94,116 @@ export default function DashboardClient({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-lg text-gray-900">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-lg text-foreground">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Expense Manager</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Analytics expenses={expenses} selectedMonth={selectedMonth} />
-
-        <div className="mt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <button
-                onClick={() => changeMonth('prev')}
-                className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 text-gray-900"
-              >
-                ← Prev
-              </button>
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1 text-center sm:text-left">
-                {format(selectedMonth, 'MMMM yyyy')}
-              </h2>
-              {format(selectedMonth, 'yyyy-MM') !== format(new Date(), 'yyyy-MM') && (
-                <button
-                  onClick={() => changeMonth('next')}
-                  className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 text-gray-900"
-                >
-                  Current →
-                </button>
-              )}
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 px-2 py-2">
+            <Wallet className="h-6 w-6" />
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold">Expense Manager</span>
+              <span className="text-xs text-muted-foreground">Track your spending</span>
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              className="hidden sm:block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-sm"
-            >
-              + Add Expense
-            </button>
           </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/dashboard">
+                      <Wallet className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <div className="px-2 py-2 text-xs text-muted-foreground">
+            Expense Manager v0.1.0
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <h1 className="text-lg font-semibold">Expense Manager</h1>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
+          <Analytics expenses={expenses} selectedMonth={selectedMonth} />
 
-          <ExpenseList
-            expenses={expenses}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <div className="mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changeMonth('prev')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev
+                </Button>
+                <h2 className="text-lg sm:text-xl font-semibold flex-1 text-center sm:text-left">
+                  {format(selectedMonth, 'MMMM yyyy')}
+                </h2>
+                {format(selectedMonth, 'yyyy-MM') !== format(new Date(), 'yyyy-MM') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changeMonth('next')}
+                  >
+                    Current
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <Button
+                onClick={() => setShowForm(true)}
+                className="hidden sm:flex"
+              >
+                <Plus className="h-4 w-4" />
+                Add Expense
+              </Button>
+            </div>
+
+            <ExpenseList
+              expenses={expenses}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
         </div>
-      </main>
 
-      {/* Floating Action Button for Mobile */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 active:bg-primary-800 flex items-center justify-center text-2xl font-light z-40 transition-transform active:scale-95"
-        aria-label="Add Expense"
-      >
-        +
-      </button>
+        {/* Floating Action Button for Mobile */}
+        <Button
+          onClick={() => setShowForm(true)}
+          size="icon"
+          className="fixed bottom-6 right-6 sm:hidden h-14 w-14 rounded-full shadow-lg z-40"
+          aria-label="Add Expense"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
 
-      {showForm && (
-        <ExpenseForm
-          userId={userId}
-          expense={editingExpense}
-          onClose={handleFormClose}
-        />
-      )}
-    </div>
+        {showForm && (
+          <ExpenseForm
+            userId={userId}
+            expense={editingExpense}
+            onClose={handleFormClose}
+          />
+        )}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
