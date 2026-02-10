@@ -5,15 +5,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import Analytics from '@/components/Analytics'
+import ExpenseForm from '@/components/ExpenseForm'
+import ExpenseList from '@/components/ExpenseList'
 import { Database } from '@/lib/database.types'
 
 type Expense = Database['public']['Tables']['expenses']['Row']
 
-export default function DashboardClient({ userId }: { userId: string }) {
+export default function ExpensesClient({ userId }: { userId: string }) {
   const pathname = usePathname()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
   const supabase = createClient()
 
@@ -43,6 +46,30 @@ export default function DashboardClient({ userId }: { userId: string }) {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this expense?')) return
+
+    try {
+      const { error } = await supabase.from('expenses').delete().eq('id', id)
+      if (error) throw error
+      fetchExpenses()
+    } catch (error) {
+      console.error('Error deleting expense:', error)
+      alert('Failed to delete expense')
+    }
+  }
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense)
+    setShowForm(true)
+  }
+
+  const handleFormClose = () => {
+    setShowForm(false)
+    setEditingExpense(null)
+    fetchExpenses()
+  }
+
   const changeMonth = (direction: 'prev' | 'next') => {
     setSelectedMonth((prev) =>
       direction === 'prev' ? subMonths(prev, 1) : new Date()
@@ -58,7 +85,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -102,16 +129,36 @@ export default function DashboardClient({ userId }: { userId: string }) {
               </button>
             )}
           </div>
-          <Link
-            href="/expenses"
+          <button
+            onClick={() => setShowForm(true)}
             className="hidden sm:block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-sm"
           >
             + Add Expense
-          </Link>
+          </button>
         </div>
 
-        <Analytics expenses={expenses} selectedMonth={selectedMonth} />
+        <ExpenseList
+          expenses={expenses}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </main>
+
+      <button
+        onClick={() => setShowForm(true)}
+        className="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 active:bg-primary-800 flex items-center justify-center text-2xl font-light z-40 transition-transform active:scale-95"
+        aria-label="Add Expense"
+      >
+        +
+      </button>
+
+      {showForm && (
+        <ExpenseForm
+          userId={userId}
+          expense={editingExpense}
+          onClose={handleFormClose}
+        />
+      )}
     </div>
   )
 }
