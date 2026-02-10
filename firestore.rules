@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // expense_manager/{userId} = profile doc
+    // expense_manager/{userId}/expenses/{expenseId} = expense docs
+    // Only the signed-in user can read/write their own branch
+    match /expense_manager/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { Database } from '@/lib/database.types'
+import { addExpense, updateExpense } from '@/lib/firestore'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -66,7 +66,6 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [tags, setTags] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
     if (expense) {
@@ -94,39 +93,27 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
 
     try {
       if (expense) {
-        // Update existing expense
-        const { error } = await (supabase
-          .from('expenses') as any)
-          .update({
-            amount: parseFloat(amount),
-            description,
-            category,
-            date,
-            tags,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', expense.id)
-        if (error) throw error
+        await updateExpense(userId, expense.id, {
+          amount: parseFloat(amount),
+          description,
+          category,
+          date,
+          tags,
+        })
       } else {
-        // Insert new expense
-        const { error } = await (supabase
-          .from('expenses') as any)
-          .insert({
-            user_id: userId,
-            amount: parseFloat(amount),
-            description,
-            category,
-            date,
-            tags,
-            updated_at: new Date().toISOString(),
-          })
-        if (error) throw error
+        await addExpense(userId, {
+          amount: parseFloat(amount),
+          description,
+          category,
+          date,
+          tags,
+        })
       }
 
       onClose()
-    } catch (error: any) {
-      console.error('Error saving expense:', error)
-      alert(error.message || 'Failed to save expense')
+    } catch (err: unknown) {
+      console.error('Error saving expense:', err)
+      alert(err instanceof Error ? err.message : 'Failed to save expense')
     } finally {
       setLoading(false)
     }

@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { fetchExpenses, deleteExpense, type Expense } from '@/lib/firestore'
 import { Wallet, Receipt, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import ExpenseForm from '@/components/ExpenseForm'
 import ExpenseList from '@/components/ExpenseList'
-import { Database } from '@/lib/database.types'
 import {
   Sidebar,
   SidebarContent,
@@ -27,8 +26,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import MobileBottomNav from '@/components/MobileBottomNav'
 import Logo from '@/components/Logo'
-
-type Expense = Database['public']['Tables']['expenses']['Row']
+import SignOutButton from '@/components/SignOutButton'
 
 export default function ExpensesClient({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -36,27 +34,17 @@ export default function ExpensesClient({ userId }: { userId: string }) {
   const [showForm, setShowForm] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
-  const supabase = createClient()
 
   useEffect(() => {
-    fetchExpenses()
+    loadExpenses()
   }, [selectedMonth])
 
-  const fetchExpenses = async () => {
+  const loadExpenses = async () => {
     try {
       const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd')
       const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd')
-
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: false })
-
-      if (error) throw error
-      setExpenses(data || [])
+      const data = await fetchExpenses(userId, startDate, endDate)
+      setExpenses(data)
     } catch (error) {
       console.error('Error fetching expenses:', error)
     } finally {
@@ -68,9 +56,8 @@ export default function ExpensesClient({ userId }: { userId: string }) {
     if (!confirm('Are you sure you want to delete this expense?')) return
 
     try {
-      const { error } = await supabase.from('expenses').delete().eq('id', id)
-      if (error) throw error
-      fetchExpenses()
+      await deleteExpense(userId, id)
+      loadExpenses()
     } catch (error) {
       console.error('Error deleting expense:', error)
       alert('Failed to delete expense')
@@ -85,7 +72,7 @@ export default function ExpensesClient({ userId }: { userId: string }) {
   const handleFormClose = () => {
     setShowForm(false)
     setEditingExpense(null)
-    fetchExpenses()
+    loadExpenses()
   }
 
   const changeMonth = (direction: 'prev' | 'next') => {
@@ -140,8 +127,11 @@ export default function ExpensesClient({ userId }: { userId: string }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <div className="px-2 py-2 text-xs text-muted-foreground">
-            Expense Manager v0.1.0
+          <div className="px-2 py-2 space-y-2">
+            <SignOutButton />
+            <div className="text-xs text-muted-foreground">
+              Expense Manager v0.1.0
+            </div>
           </div>
         </SidebarFooter>
       </Sidebar>

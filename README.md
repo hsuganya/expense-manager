@@ -1,10 +1,10 @@
 # Expense Manager
 
-A modern expense tracking application built with Next.js 14, Supabase, and TypeScript. Features full CRUD operations, authentication, and comprehensive analytics.
+A modern expense tracking application built with Next.js 14, Firebase, and TypeScript. Features full CRUD operations, authentication, and comprehensive analytics.
 
 ## Features
 
-- 🔐 **Authentication**: Secure login/signup flow with Supabase Auth
+- 🔐 **Authentication**: Secure login/signup flow with Firebase Auth (email/password + Google & GitHub)
 - 💰 **Expense Management**: Full CRUD operations (Create, Read, Update, Delete)
 - 📊 **Analytics Dashboard**: 
   - Total spending overview
@@ -17,7 +17,7 @@ A modern expense tracking application built with Next.js 14, Supabase, and TypeS
 ## Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
-- **Database & Auth**: Supabase
+- **Database & Auth**: Firebase (Firestore + Firebase Auth)
 - **Styling**: Tailwind CSS
 - **Charts**: Recharts
 - **Date Handling**: date-fns
@@ -26,7 +26,7 @@ A modern expense tracking application built with Next.js 14, Supabase, and TypeS
 ## Prerequisites
 
 - Node.js 18+ installed
-- A Supabase account (free tier works)
+- A Firebase project ([console.firebase.google.com](https://console.firebase.google.com))
 
 ## Setup Instructions
 
@@ -36,100 +36,60 @@ A modern expense tracking application built with Next.js 14, Supabase, and TypeS
 npm install
 ```
 
-### 2. Set Up Supabase
+### 2. Configure Environment Variables
 
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Once your project is ready, go to **Settings** → **API**
-3. Copy your **Project URL** and **anon/public key**
-
-### 3. Configure Environment Variables
-
-Create a `.env.local` file in the root directory:
+Copy the Firebase config from `env.firebase.example` into a `.env.local` file in the root directory. Use the values from your Firebase project (**Project settings** → **Your apps** → **SDK setup and configuration**):
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Firebase (client) – from Firebase Console
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 ```
 
-### 4. Set Up Database
+For **server-side session verification** (recommended for protected routes), add Firebase Admin credentials from **Project settings** → **Service accounts** → **Generate new private key**:
 
-1. Go to your Supabase project dashboard
-2. Navigate to **SQL Editor**
-3. Run the migration file located at `supabase/migrations/001_create_expenses_table.sql`
-
-Alternatively, you can copy and paste this SQL:
-
-```sql
--- Create expenses table
-CREATE TABLE IF NOT EXISTS expenses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount DECIMAL(10, 2) NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL,
-  date DATE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
-);
-
--- Enable Row Level Security
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-
--- Create policy to allow users to view only their own expenses
-CREATE POLICY "Users can view their own expenses"
-  ON expenses FOR SELECT
-  USING (auth.uid() = user_id);
-
--- Create policy to allow users to insert their own expenses
-CREATE POLICY "Users can insert their own expenses"
-  ON expenses FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Create policy to allow users to update their own expenses
-CREATE POLICY "Users can update their own expenses"
-  ON expenses FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Create policy to allow users to delete their own expenses
-CREATE POLICY "Users can delete their own expenses"
-  ON expenses FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS expenses_user_id_idx ON expenses(user_id);
-CREATE INDEX IF NOT EXISTS expenses_date_idx ON expenses(date);
-CREATE INDEX IF NOT EXISTS expenses_user_date_idx ON expenses(user_id, date);
+```env
+FIREBASE_PROJECT_ID=...
+FIREBASE_CLIENT_EMAIL=...
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-### 5. Install Additional Dependencies
+### 3. (Optional) Enable Social Login
 
-```bash
-npm install
+1. In Firebase Console go to **Authentication** → **Sign-in method**
+2. Enable **Google** and/or **GitHub** and follow the prompts
+3. In **Authentication** → **Settings** → **Authorized domains**, ensure your app domain (and `localhost` for dev) is listed
+
+### 4. Firestore
+
+- **Data model**: Top-level collection is `expense_manager`. Each logged-in user has a document by their `userId`, with a subcollection `expenses` for their expense items: `expense_manager/{userId}/expenses/{expenseId}`.
+- No schema setup is required; documents are created on first use.
+- Deploy the index for date-range queries: run `npx firebase deploy --only firestore:indexes` (requires Firebase CLI and `firebase init`), or create the index when Firestore prompts you via the link in the error message.
+- In **Firestore** → **Rules**, restrict access so each user can only read/write their own `expense_manager` doc and its `expenses` subcollection:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /expense_manager/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
 ```
 
-### 6. Create a User Account (Optional)
-
-You can create a user account via the web interface, or use the provided script:
-
-```bash
-npm run create-user hsuganya@example.com yourpassword123
-```
-
-Or directly:
-```bash
-node scripts/create-user.js hsuganya@example.com yourpassword123
-```
-
-**Note:** Make sure your `.env.local` file is set up before running this script.
-
-### 7. Run the Development Server
+### 6. Run the Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser. Create an account from the login page (Sign up).
 
 ## Usage
 
@@ -144,6 +104,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 expense-manager/
 ├── app/
+│   ├── api/auth/session/   # Session cookie API (Firebase)
+│   ├── auth/callback/      # OAuth redirect handler (optional)
 │   ├── dashboard/          # Dashboard page with analytics
 │   ├── login/              # Authentication page
 │   ├── layout.tsx          # Root layout
@@ -154,19 +116,21 @@ expense-manager/
 │   ├── ExpenseForm.tsx     # Add/Edit expense form
 │   └── ExpenseList.tsx     # List of expenses
 ├── lib/
-│   ├── supabase.ts         # Client-side Supabase client
-│   ├── supabase-server.ts  # Server-side Supabase client
-│   └── database.types.ts   # TypeScript types for database
-└── supabase/
-    └── migrations/         # Database migration files
+│   ├── firebase.ts         # Client Firebase app & Auth/Firestore
+│   ├── firebase-admin.ts   # Server Firebase Admin (session verification)
+│   ├── firestore.ts        # Firestore helpers for expenses
+│   ├── auth-server.ts      # getServerUser() for protected pages
+│   └── database.types.ts   # TypeScript types (expense shape)
+├── firestore.indexes.json  # Composite index for expenses queries
+└── env.firebase.example    # Env vars template for Firebase
 ```
 
 ## Features in Detail
 
 ### Authentication
-- Email/password authentication via Supabase
-- Secure session management
-- Protected routes
+- Email/password and Google/GitHub sign-in via Firebase Auth
+- Session cookies for server-side protection (when Firebase Admin is configured)
+- Protected routes (middleware + server checks)
 
 ### Expense Management
 - Add expenses with amount, description, category, and date
@@ -193,10 +157,9 @@ expense-manager/
 
 ## Security
 
-- Row Level Security (RLS) enabled on all tables
-- Users can only access their own data
-- Secure authentication with Supabase Auth
-- Environment variables for sensitive keys
+- Firestore security rules should restrict access to each user’s own documents
+- Server-side session verification with Firebase Admin (when env vars are set)
+- Environment variables for API keys and service account
 
 ## Deployment
 
@@ -204,14 +167,12 @@ expense-manager/
 
 1. Push your code to GitHub
 2. Import your repository in Vercel
-3. Add your environment variables in Vercel dashboard
+3. Add all Firebase env vars from `env.firebase.example` in Vercel dashboard
 4. Deploy!
 
 ### Other Platforms
 
-Make sure to set the environment variables:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+Set the same environment variables as in `env.firebase.example` (all `NEXT_PUBLIC_FIREBASE_*` and, for server auth, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`).
 
 ## License
 

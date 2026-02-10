@@ -1,6 +1,12 @@
 import { redirect } from 'next/navigation'
+import { getServerUser } from '@/lib/auth-server'
 
 export default async function Home() {
-  // Directly redirect to dashboard, skip authentication
+  const user = await getServerUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
   redirect('/dashboard')
 }
