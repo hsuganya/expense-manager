@@ -1,5 +1,5 @@
 # Expense Manager
-
+e
 A modern expense tracking application built with Next.js 14, Firebase, and TypeScript. Features full CRUD operations, authentication, and comprehensive analytics.
 
 ## Features
