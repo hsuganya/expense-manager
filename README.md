@@ -1,4 +1,4 @@
-su# Expense Manager
+# Expense Manager
 
 A modern expense tracking application built with Next.js 14, Supabase, and TypeScript. Features full CRUD operations, authentication, and comprehensive analytics.
 
