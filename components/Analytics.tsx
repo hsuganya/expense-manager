@@ -60,28 +60,28 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Spent</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Total Spent</p>
+          <p className="text-2xl sm:text-3xl font-bold text-foreground">
             ₹{analytics.total.toFixed(2)}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Average per Day</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Average per Day</p>
+          <p className="text-2xl sm:text-3xl font-bold text-foreground">
             ₹{analytics.avgPerDay.toFixed(2)}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Transactions</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{analytics.count}</p>
+        <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Total Transactions</p>
+          <p className="text-2xl sm:text-3xl font-bold text-foreground">{analytics.count}</p>
         </div>
       </div>
 
       {analytics.categoryData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
+          <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
               Spending by Category
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -110,8 +110,8 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
+          <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
               Daily Spending
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -134,8 +134,8 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
       )}
 
       {analytics.categoryData.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
+        <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
             Category Breakdown
           </h3>
           <div className="space-y-2">
@@ -148,9 +148,9 @@ export default function Analytics({ expenses, selectedMonth }: AnalyticsProps) {
                       backgroundColor: COLORS[index % COLORS.length],
                     }}
                   />
-                  <span className="text-gray-700">{item.name}</span>
+                  <span className="text-foreground">{item.name}</span>
                 </div>
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   ₹{item.value.toFixed(2)}
                 </span>
               </div>
