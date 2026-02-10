@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { Wallet, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
-import ExpenseForm from '@/components/ExpenseForm'
-import ExpenseList from '@/components/ExpenseList'
+import { Wallet, Receipt, ChevronLeft, ChevronRight } from 'lucide-react'
 import Analytics from '@/components/Analytics'
 import { Database } from '@/lib/database.types'
 import {
@@ -33,8 +32,6 @@ type Expense = Database['public']['Tables']['expenses']['Row']
 export default function DashboardClient({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
   const supabase = createClient()
 
@@ -62,30 +59,6 @@ export default function DashboardClient({ userId }: { userId: string }) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return
-
-    try {
-      const { error } = await supabase.from('expenses').delete().eq('id', id)
-      if (error) throw error
-      fetchExpenses()
-    } catch (error) {
-      console.error('Error deleting expense:', error)
-      alert('Failed to delete expense')
-    }
-  }
-
-  const handleEdit = (expense: Expense) => {
-    setEditingExpense(expense)
-    setShowForm(true)
-  }
-
-  const handleFormClose = () => {
-    setShowForm(false)
-    setEditingExpense(null)
-    fetchExpenses()
   }
 
   const changeMonth = (direction: 'prev' | 'next') => {
@@ -121,10 +94,18 @@ export default function DashboardClient({ userId }: { userId: string }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/dashboard">
+                    <Link href="/dashboard">
                       <Wallet className="h-4 w-4" />
                       <span>Dashboard</span>
-                    </a>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/expenses">
+                      <Receipt className="h-4 w-4" />
+                      <span>Expenses</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -144,59 +125,39 @@ export default function DashboardClient({ userId }: { userId: string }) {
           <Logo size="sm" showText={true} />
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-6 pb-20 md:pb-6">
-          <Analytics expenses={expenses} selectedMonth={selectedMonth} />
-
-          <div className="mt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => changeMonth('prev')}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Prev
+              </Button>
+              <h2 className="text-lg sm:text-xl font-semibold flex-1 text-center sm:text-left">
+                {format(selectedMonth, 'MMMM yyyy')}
+              </h2>
+              {format(selectedMonth, 'yyyy-MM') !== format(new Date(), 'yyyy-MM') && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => changeMonth('prev')}
+                  onClick={() => changeMonth('next')}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Prev
+                  Current
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
-                <h2 className="text-lg sm:text-xl font-semibold flex-1 text-center sm:text-left">
-                  {format(selectedMonth, 'MMMM yyyy')}
-                </h2>
-                {format(selectedMonth, 'yyyy-MM') !== format(new Date(), 'yyyy-MM') && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => changeMonth('next')}
-                  >
-                    Current
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <Button
-                onClick={() => setShowForm(true)}
-                className="hidden sm:flex"
-              >
-                <Plus className="h-4 w-4" />
-                Add Expense
-              </Button>
+              )}
             </div>
-
-            <ExpenseList
-              expenses={expenses}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <Button asChild className="hidden sm:flex">
+              <Link href="/expenses">Add Expense</Link>
+            </Button>
           </div>
-        </div>
 
-        {showForm && (
-          <ExpenseForm
-            userId={userId}
-            expense={editingExpense}
-            onClose={handleFormClose}
-          />
-        )}
+          <Analytics expenses={expenses} selectedMonth={selectedMonth} />
+        </div>
       </SidebarInset>
-      <MobileBottomNav onAddExpense={() => setShowForm(true)} />
+      <MobileBottomNav addHref="/expenses" />
     </SidebarProvider>
   )
 }
