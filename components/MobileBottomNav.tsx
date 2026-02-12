@@ -1,6 +1,6 @@
 'use client'
 
-import { Wallet, Receipt, Plus } from 'lucide-react'
+import { Wallet, Receipt, Users, Plus } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: Wallet },
   { title: 'Expenses', href: '/expenses', icon: Receipt },
+  { title: 'Family', href: '/family', icon: Users },
 ]
 
 interface MobileBottomNavProps {

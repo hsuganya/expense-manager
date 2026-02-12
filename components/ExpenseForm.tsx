@@ -33,13 +33,19 @@ type Expense = Database['public']['Tables']['expenses']['Row']
 const CATEGORIES = [
   'Food',
   'Groceries',
+  'Vegetables',
+  'Fruits',
+  'Meats',
   'Transport',
+  'Fuel',
   'Travel',
   'Shopping',
   'Bills',
   'Entertainment',
+  'Gifts',
   'Healthcare',
-  'Education',
+  'School fee',
+  'Education & Learning',
   'Other',
 ]
 
@@ -53,18 +59,25 @@ const TAGS = [
   'Luxury / Lifestyle Upgrades',
 ]
 
+export interface FamilyMemberOption {
+  id: string
+  name: string
+}
+
 interface ExpenseFormProps {
   userId: string
   expense?: Expense | null
+  familyMembers?: FamilyMemberOption[]
   onClose: () => void
 }
 
-export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormProps) {
+export default function ExpenseForm({ userId, expense, familyMembers = [], onClose }: ExpenseFormProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('Food')
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [tags, setTags] = useState<string[]>([])
+  const [familyMemberId, setFamilyMemberId] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -74,6 +87,7 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
       setCategory(expense.category)
       setDate(expense.date)
       setTags((expense as any).tags || [])
+      setFamilyMemberId(expense.family_member_id ?? '')
     }
   }, [expense])
 
@@ -99,6 +113,7 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
           category,
           date,
           tags,
+          family_member_id: familyMemberId || null,
         })
       } else {
         await addExpense(userId, {
@@ -107,6 +122,7 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
           category,
           date,
           tags,
+          family_member_id: familyMemberId || null,
         })
       }
 
@@ -181,6 +197,25 @@ export default function ExpenseForm({ userId, expense, onClose }: ExpenseFormPro
               required
             />
           </div>
+
+          {familyMembers.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="familyMember">Family member (optional)</Label>
+              <Select value={familyMemberId || 'none'} onValueChange={(v) => setFamilyMemberId(v === 'none' ? '' : v)}>
+                <SelectTrigger id="familyMember">
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {familyMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Tags (Optional)</Label>

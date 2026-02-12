@@ -18,6 +18,7 @@ export interface Database {
           category: string
           date: string
           tags: string[] | null
+          family_member_id: string | null
           created_at: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export interface Database {
           category: string
           date: string
           tags?: string[] | null
+          family_member_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -40,6 +42,30 @@ export interface Database {
           category?: string
           date?: string
           tags?: string[] | null
+          family_member_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      family_members: {
+        Row: {
+          id: string
+          name: string
+          relation: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          relation?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          relation?: string | null
           created_at?: string
           updated_at?: string
         }

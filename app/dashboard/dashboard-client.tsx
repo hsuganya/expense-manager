@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { fetchExpenses, type Expense } from '@/lib/firestore'
-import { Wallet, Receipt, ChevronLeft, ChevronRight } from 'lucide-react'
+import { fetchExpenses, fetchFamilyMembers, type Expense, type FamilyMember } from '@/lib/firestore'
+import { Wallet, Receipt, Users, ChevronLeft, ChevronRight } from 'lucide-react'
 import Analytics from '@/components/Analytics'
 import {
   Sidebar,
@@ -29,12 +29,17 @@ import SignOutButton from '@/components/SignOutButton'
 
 export default function DashboardClient({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
 
   useEffect(() => {
     loadExpenses()
   }, [selectedMonth])
+
+  useEffect(() => {
+    fetchFamilyMembers(userId).then(setFamilyMembers).catch(console.error)
+  }, [userId])
 
   const loadExpenses = async () => {
     try {
@@ -96,6 +101,14 @@ export default function DashboardClient({ userId }: { userId: string }) {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/family">
+                      <Users className="h-4 w-4" />
+                      <span>Family</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -145,7 +158,11 @@ export default function DashboardClient({ userId }: { userId: string }) {
             </Button>
           </div>
 
-          <Analytics expenses={expenses} selectedMonth={selectedMonth} />
+          <Analytics
+            expenses={expenses}
+            selectedMonth={selectedMonth}
+            familyMembers={familyMembers.map((m) => ({ id: m.id, name: m.name }))}
+          />
         </div>
       </SidebarInset>
       <MobileBottomNav addHref="/expenses" />

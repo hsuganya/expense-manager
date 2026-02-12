@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { fetchExpenses, deleteExpense, type Expense } from '@/lib/firestore'
-import { Wallet, Receipt, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { fetchExpenses, deleteExpense, fetchFamilyMembers, type Expense, type FamilyMember } from '@/lib/firestore'
+import { Wallet, Receipt, Users, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import ExpenseForm from '@/components/ExpenseForm'
 import ExpenseList from '@/components/ExpenseList'
 import {
@@ -30,6 +30,7 @@ import SignOutButton from '@/components/SignOutButton'
 
 export default function ExpensesClient({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
@@ -38,6 +39,10 @@ export default function ExpensesClient({ userId }: { userId: string }) {
   useEffect(() => {
     loadExpenses()
   }, [selectedMonth])
+
+  useEffect(() => {
+    fetchFamilyMembers(userId).then(setFamilyMembers).catch(console.error)
+  }, [userId])
 
   const loadExpenses = async () => {
     try {
@@ -122,6 +127,14 @@ export default function ExpensesClient({ userId }: { userId: string }) {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/family">
+                      <Users className="h-4 w-4" />
+                      <span>Family</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -176,6 +189,7 @@ export default function ExpensesClient({ userId }: { userId: string }) {
             expenses={expenses}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            familyMembers={familyMembers.map((m) => ({ id: m.id, name: m.name }))}
           />
         </div>
 
@@ -183,6 +197,7 @@ export default function ExpensesClient({ userId }: { userId: string }) {
           <ExpenseForm
             userId={userId}
             expense={editingExpense}
+            familyMembers={familyMembers.map((m) => ({ id: m.id, name: m.name }))}
             onClose={handleFormClose}
           />
         )}
