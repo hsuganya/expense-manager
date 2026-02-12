@@ -52,6 +52,7 @@ export interface Database {
           id: string
           name: string
           relation: string | null
+          avatar_url: string | null
           created_at: string
           updated_at: string
         }
@@ -59,6 +60,7 @@ export interface Database {
           id?: string
           name: string
           relation?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -66,6 +68,7 @@ export interface Database {
           id?: string
           name?: string
           relation?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }

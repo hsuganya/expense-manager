@@ -29,6 +29,7 @@ import SignOutButton from '@/components/SignOutButton'
 
 export default function DashboardClient({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [previousMonthTotal, setPreviousMonthTotal] = useState<number | null>(null)
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
@@ -36,6 +37,22 @@ export default function DashboardClient({ userId }: { userId: string }) {
   useEffect(() => {
     loadExpenses()
   }, [selectedMonth])
+
+  useEffect(() => {
+    const loadPreviousMonth = async () => {
+      const prev = subMonths(selectedMonth, 1)
+      const start = format(startOfMonth(prev), 'yyyy-MM-dd')
+      const end = format(endOfMonth(prev), 'yyyy-MM-dd')
+      try {
+        const data = await fetchExpenses(userId, start, end)
+        const total = data.reduce((sum, exp) => sum + exp.amount, 0)
+        setPreviousMonthTotal(total)
+      } catch {
+        setPreviousMonthTotal(null)
+      }
+    }
+    loadPreviousMonth()
+  }, [userId, selectedMonth])
 
   useEffect(() => {
     fetchFamilyMembers(userId).then(setFamilyMembers).catch(console.error)
@@ -162,6 +179,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
             expenses={expenses}
             selectedMonth={selectedMonth}
             familyMembers={familyMembers.map((m) => ({ id: m.id, name: m.name }))}
+            previousMonthTotal={previousMonthTotal}
           />
         </div>
       </SidebarInset>

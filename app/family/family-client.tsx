@@ -9,7 +9,8 @@ import {
   deleteFamilyMember,
   type FamilyMember,
 } from '@/lib/firestore'
-import { Wallet, Receipt, Users, Plus, Pencil, Trash2 } from 'lucide-react'
+import { uploadFamilyMemberAvatar } from '@/lib/storage'
+import { Wallet, Receipt, Users, Plus, Pencil, Trash2, User } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -46,6 +47,8 @@ export default function FamilyClient({ userId }: { userId: string }) {
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null)
   const [formName, setFormName] = useState('')
   const [formRelation, setFormRelation] = useState('')
+  const [formAvatarFile, setFormAvatarFile] = useState<File | null>(null)
+  const [formAvatarPreview, setFormAvatarPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   const loadMembers = async () => {
@@ -67,11 +70,32 @@ export default function FamilyClient({ userId }: { userId: string }) {
     if (editingMember) {
       setFormName(editingMember.name)
       setFormRelation(editingMember.relation ?? '')
+      setFormAvatarFile(null)
+      setFormAvatarPreview((prev) => {
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+        return editingMember.avatar_url ?? null
+      })
     } else {
       setFormName('')
       setFormRelation('')
+      setFormAvatarFile(null)
+      setFormAvatarPreview((prev) => {
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+        return null
+      })
     }
   }, [editingMember])
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setFormAvatarFile(file)
+      setFormAvatarPreview((prev) => {
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+        return URL.createObjectURL(file)
+      })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,11 +106,19 @@ export default function FamilyClient({ userId }: { userId: string }) {
           name: formName.trim(),
           relation: formRelation.trim() || null,
         })
+        if (formAvatarFile) {
+          const avatarUrl = await uploadFamilyMemberAvatar(userId, editingMember.id, formAvatarFile)
+          await updateFamilyMember(userId, editingMember.id, { avatar_url: avatarUrl })
+        }
       } else {
-        await addFamilyMember(userId, {
+        const newId = await addFamilyMember(userId, {
           name: formName.trim(),
           relation: formRelation.trim() || null,
         })
+        if (formAvatarFile) {
+          const avatarUrl = await uploadFamilyMemberAvatar(userId, newId, formAvatarFile)
+          await updateFamilyMember(userId, newId, { avatar_url: avatarUrl })
+        }
       }
       setShowForm(false)
       setEditingMember(null)
@@ -114,6 +146,11 @@ export default function FamilyClient({ userId }: { userId: string }) {
     setEditingMember(null)
     setFormName('')
     setFormRelation('')
+    setFormAvatarFile(null)
+    setFormAvatarPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+      return null
+    })
     setShowForm(true)
   }
 
@@ -221,11 +258,24 @@ export default function FamilyClient({ userId }: { userId: string }) {
                     key={member.id}
                     className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-accent transition-colors"
                   >
-                    <div>
-                      <p className="font-medium text-foreground">{member.name}</p>
-                      {member.relation && (
-                        <p className="text-sm text-muted-foreground">{member.relation}</p>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                        {member.avatar_url ? (
+                          <img
+                            src={member.avatar_url}
+                            alt={member.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{member.name}</p>
+                        {member.relation && (
+                          <p className="text-sm text-muted-foreground">{member.relation}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -262,6 +312,34 @@ export default function FamilyClient({ userId }: { userId: string }) {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Profile photo (optional)</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                      {formAvatarPreview ? (
+                        <img
+                          src={formAvatarPreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        id="avatar"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleAvatarChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        JPG, PNG, WebP or GIF. Max recommended 2MB.
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input

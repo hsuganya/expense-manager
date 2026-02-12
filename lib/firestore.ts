@@ -133,6 +133,7 @@ function mapDocToFamilyMember(
   const d = data as {
     name: string
     relation?: string | null
+    avatar_url?: string | null
     created_at: Timestamp | string
     updated_at: Timestamp | string
   }
@@ -140,6 +141,7 @@ function mapDocToFamilyMember(
     id,
     name: d.name,
     relation: d.relation ?? null,
+    avatar_url: d.avatar_url ?? null,
     created_at:
       typeof d.created_at === 'string'
         ? d.created_at
@@ -160,26 +162,28 @@ export async function fetchFamilyMembers(userId: string): Promise<FamilyMember[]
 
 export async function addFamilyMember(
   userId: string,
-  data: { name: string; relation?: string | null }
-): Promise<void> {
+  data: { name: string; relation?: string | null; avatar_url?: string | null }
+): Promise<string> {
   const db = getFirestoreDb()
-  const ref = doc(familyMembersRef(db, userId))
-  await setDoc(ref, {
+  const docRef = doc(familyMembersRef(db, userId))
+  await setDoc(docRef, {
     name: data.name,
     relation: data.relation ?? null,
+    avatar_url: data.avatar_url ?? null,
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
   })
+  return docRef.id
 }
 
 export async function updateFamilyMember(
   userId: string,
   id: string,
-  data: { name?: string; relation?: string | null }
+  data: { name?: string; relation?: string | null; avatar_url?: string | null }
 ): Promise<void> {
   const db = getFirestoreDb()
-  const ref = doc(db, TOP_LEVEL_COLLECTION, userId, FAMILY_MEMBERS_SUBCOLLECTION, id)
-  await updateDoc(ref, {
+  const docRef = doc(db, TOP_LEVEL_COLLECTION, userId, FAMILY_MEMBERS_SUBCOLLECTION, id)
+  await updateDoc(docRef, {
     ...data,
     updated_at: serverTimestamp(),
   })

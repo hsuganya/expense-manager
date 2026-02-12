@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { format } from 'date-fns'
-import { Users } from 'lucide-react'
+import { Users, TrendingUp, TrendingDown, Receipt, Target, BarChart3 } from 'lucide-react'
 import { Database } from '@/lib/database.types'
 import {
   BarChart,
@@ -28,15 +28,21 @@ interface AnalyticsProps {
   expenses: Expense[]
   selectedMonth: Date
   familyMembers?: FamilyMemberOption[]
+  /** Total spent in the previous month (for comparison) */
+  previousMonthTotal?: number | null
 }
 
 const COLORS = ['#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#6366f1', '#64748b']
 
-export default function Analytics({ expenses, selectedMonth, familyMembers = [] }: AnalyticsProps) {
+export default function Analytics({ expenses, selectedMonth, familyMembers = [], previousMonthTotal }: AnalyticsProps) {
   const analytics = useMemo(() => {
     const total = expenses.reduce((sum, exp) => sum + exp.amount, 0)
     const avgPerDay = expenses.length > 0 ? total / new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0).getDate() : 0
     const count = expenses.length
+    const avgTransaction = count > 0 ? total / count : 0
+    const biggestExpense = expenses.length > 0
+      ? expenses.reduce((max, exp) => (exp.amount > max.amount ? exp : max), expenses[0])
+      : null
 
     const byCategory = expenses.reduce((acc, exp) => {
       acc[exp.category] = (acc[exp.category] || 0) + exp.amount
@@ -81,8 +87,25 @@ export default function Analytics({ expenses, selectedMonth, familyMembers = [] 
       }))
       .sort((a, b) => b.total - a.total)
 
-    return { total, avgPerDay, count, categoryData, dailyChartData, familyMemberData }
-  }, [expenses, selectedMonth, familyMembers])
+    const topCategory = categoryData[0]?.name ?? null
+    const vsLastMonth =
+      previousMonthTotal != null && previousMonthTotal > 0
+        ? parseFloat((((total - previousMonthTotal) / previousMonthTotal) * 100).toFixed(1))
+        : null
+
+    return {
+      total,
+      avgPerDay,
+      count,
+      avgTransaction,
+      biggestExpense,
+      topCategory,
+      vsLastMonth,
+      categoryData,
+      dailyChartData,
+      familyMemberData,
+    }
+  }, [expenses, selectedMonth, familyMembers, previousMonthTotal])
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -105,44 +128,119 @@ export default function Analytics({ expenses, selectedMonth, familyMembers = [] 
         </div>
       </div>
 
+      {analytics.count > 0 && (
+        <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            Expense insights
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Receipt className="h-3.5 w-3.5" />
+                Biggest expense
+              </p>
+              {analytics.biggestExpense ? (
+                <>
+                  <p className="text-lg font-bold text-foreground">
+                    ₹{analytics.biggestExpense.amount.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate" title={analytics.biggestExpense.description}>
+                    {analytics.biggestExpense.description}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">—</p>
+              )}
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Target className="h-3.5 w-3.5" />
+                Average transaction
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                ₹{analytics.avgTransaction.toFixed(2)}
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Top category</p>
+              <p className="text-lg font-bold text-foreground">
+                {analytics.topCategory ?? '—'}
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Vs last month</p>
+              {analytics.vsLastMonth != null ? (
+                <div className="flex items-center gap-1">
+                  {analytics.vsLastMonth >= 0 ? (
+                    <TrendingUp className="h-4 w-4 text-destructive shrink-0" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                  )}
+                  <span
+                    className={
+                      analytics.vsLastMonth >= 0
+                        ? 'text-lg font-bold text-destructive'
+                        : 'text-lg font-bold text-green-600 dark:text-green-400'
+                    }
+                  >
+                    {analytics.vsLastMonth >= 0 ? '+' : ''}{analytics.vsLastMonth}%
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No previous month data</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {analytics.categoryData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="bg-card rounded-lg shadow p-4 sm:p-6 border">
             <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
               Spending by Category
             </h3>
-            <div className="relative w-full" style={{ height: 420 }}>
-              <ResponsiveContainer width="100%" height={420}>
-                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <Pie
-                    data={analytics.categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={72}
-                    outerRadius={120}
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {analytics.categoryData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `₹${value.toFixed(2)}`} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="flex flex-col gap-1.5 text-center max-h-[280px] overflow-y-auto">
-                  {analytics.categoryData.map((entry, index) => (
+            <div className="w-full space-y-4">
+              <div className="w-full" style={{ height: 280 }}>
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                    <Pie
+                      data={analytics.categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={56}
+                      outerRadius={100}
+                      labelLine={false}
+                      label={false}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {analytics.categoryData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => {
+                        const total = analytics.categoryData.reduce((s, d) => s + d.value, 0)
+                        const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0'
+                        return [`₹${value.toFixed(2)} (${pct}%)`, name]
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                {analytics.categoryData.map((entry, index) => {
+                  const total = analytics.categoryData.reduce((s, d) => s + d.value, 0)
+                  const pct = total > 0 ? ((entry.value / total) * 100).toFixed(0) : '0'
+                  return (
                     <div
                       key={entry.name}
-                      className="flex items-center justify-center gap-2"
+                      className="flex items-center gap-2"
                     >
                       <div
                         className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -151,11 +249,11 @@ export default function Analytics({ expenses, selectedMonth, familyMembers = [] 
                         }}
                       />
                       <span className="text-xs font-medium text-foreground">
-                        {entry.name}
+                        {entry.name} <span className="text-muted-foreground">({pct}%)</span>
                       </span>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
             </div>
           </div>
